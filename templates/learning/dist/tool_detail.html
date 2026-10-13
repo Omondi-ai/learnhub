@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load learning_extras %}
+{% block title %}{{ tool.name }}{% endblock %}
+{% block content %}
+<h1><i class="fas fa-toolbox"></i> {{ tool.name }}</h1>
+<p class="text-muted">{{ tool.developer }}{% if tool.category %} — {{ tool.category }}{% endif %}</p>
+
+<div class="prose">
+    <p>{{ tool.description }}</p>
+</div>
+
+{% if tool.website %}
+    <a href="{{ tool.website }}" target="_blank" class="btn btn-sm btn-outline-primary mb-3">
+        <i class="fas fa-external-link-alt"></i> Official site
+    </a>
+{% endif %}
+
+<h3 class="section-title"><i class="fas fa-star"></i> Key Features</h3>
+{% for f in features %}
+    <div class="tool-feature">
+        <h5>{{ forloop.counter }}. {{ f.title }}</h5>
+        <p><strong>What it's for:</strong></p>
+        <div class="prose">{{ f.purpose|linebreaks }}</div>
+        <p class="mt-2"><strong>How to use it:</strong></p>
+        <div class="prose">{{ f.how_to_use|linebreaks }}</div>
+    </div>
+{% empty %}
+    <p class="text-muted">No features documented yet.</p>
+{% endfor %}
+
+<h3 class="section-title"><i class="fas fa-tasks"></i> Assignments for this Tool</h3>
+{% if assignments %}
+    <ul class="list-group">
+    {% for a in assignments %}
+        {% with sub=submissions|get_item:a.id %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <strong>{{ a.title }}</strong>
+                <small class="text-muted d-block">{{ a.prompt|truncatewords:15 }}</small>
+            </div>
+            <div>
+                {% if sub %}
+                    {% if sub.review %}
+                        <span class="badge badge-passed">{{ sub.percentage }}%</span>
+                    {% else %}
+                        <span class="badge badge-pending">Awaiting review</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge badge-locked">Not submitted</span>
+                {% endif %}
+                <a href="{% url 'learning:assignment_detail' a.id %}" class="btn btn-sm btn-primary ms-2">Open</a>
+            </div>
+        </li>
+        {% endwith %}
+    {% endfor %}
+    </ul>
+{% else %}
+    <p class="text-muted">No assignments.</p>
+{% endif %}
+
+<a href="{% url 'learning:week_detail' tool.week.id %}" class="btn btn-secondary mt-3">
+    <i class="fas fa-arrow-left"></i> Back to Week
+</a>
+{% endblock %}

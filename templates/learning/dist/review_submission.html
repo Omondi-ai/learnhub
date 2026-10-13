@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Review Submission{% endblock %}
+{% block content %}
+<h1>Review: {{ submission.assignment.title }}</h1>
+<p><strong>Submitted by:</strong> {{ submission.learner.get_full_name|default:submission.learner.username }}</p>
+
+<div class="card mb-3">
+    <div class="card-header">Their Submission</div>
+    <div class="card-body">
+        {% if submission.link %}<p><strong>Link:</strong> <a href="{{ submission.link }}" target="_blank">{{ submission.link }}</a></p>{% endif %}
+        {% if submission.text_content %}<p><strong>Notes:</strong> {{ submission.text_content|linebreaks }}</p>{% endif %}
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <h3>Rubric Scores</h3>
+    {% for c in criteria %}
+        <div class="mb-3">
+            <label class="form-label"><strong>{{ c.name }}</strong> (max {{ c.max_score }})</label>
+            <p class="text-muted small">{{ c.description }}</p>
+            <input type="number" name="criterion_{{ c.id }}" class="form-control"
+                   min="0" max="{{ c.max_score }}" step="1" required>
+        </div>
+    {% endfor %}
+
+    <h3>Your Feedback</h3>
+    <div class="mb-3">
+        <textarea name="comment" class="form-control" rows="6" required minlength="20"
+                  placeholder="Be specific and constructive. Reviews without a comment will be rejected."></textarea>
+    </div>
+
+    <button class="btn btn-primary">Submit Review</button>
+    <a href="{% url 'learning:review_inbox' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

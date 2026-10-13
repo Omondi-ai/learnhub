@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Review Queue{% endblock %}
+{% block content %}
+<h1>Review Queue</h1>
+<p class="text-muted">Your partner's submissions awaiting your review.</p>
+
+{% if no_cohort %}
+    <div class="alert alert-warning">You are not yet assigned to a cohort.</div>
+{% elif items %}
+    <ul class="list-group">
+        {% for item in items %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <strong>{{ item.submission.assignment.title }}</strong>
+                <small class="text-muted d-block">
+                    Week {{ item.week.number }} — submitted by {{ item.partner.get_full_name|default:item.partner.username }}
+                </small>
+            </div>
+            <a href="{% url 'learning:review_submission' item.submission.id %}" class="btn btn-warning btn-sm">Review</a>
+        </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Nothing to review right now. Check back later.</p>
+{% endif %}
+{% endblock %}

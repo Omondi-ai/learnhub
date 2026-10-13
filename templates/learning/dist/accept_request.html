@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Accept Review Request{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">Accept Review Request</div>
+    <div class="card-body">
+        <p>
+            <strong>{{ request.user.get_full_name }}</strong>, you are being asked by
+            <strong>{{ rr.requester.get_full_name|default:rr.requester.username }}</strong>
+            to review their submission for:
+        </p>
+        <p><strong>Assignment:</strong> {{ rr.submission.assignment.title }}</p>
+        <p><strong>Week:</strong> {{ rr.submission.assignment.week.number }}</p>
+        <p>Do you accept this request?</p>
+        <form method="post">
+            {% csrf_token %}
+            <button class="btn btn-success">Yes, accept</button>
+            <a href="{% url 'learning:review_inbox' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

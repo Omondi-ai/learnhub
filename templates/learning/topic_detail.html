@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}{{ topic.title }}{% endblock %}
+{% block content %}
+<h1>{{ topic.title }}</h1>
+<p class="text-muted">{{ topic.description }}</p>
+
+<h3 class="section-title"><i class="fas fa-book-open"></i> Reference Materials</h3>
+{% if materials %}
+    {% for m in materials %}
+        <div class="card mb-3">
+            <div class="card-header">{{ m.title }}</div>
+            <div class="card-body">
+                {% if m.content %}
+                    <div class="prose">{{ m.content|linebreaks }}</div>
+                {% endif %}
+                {% if m.url %}
+                    <a href="{{ m.url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                        <i class="fas fa-external-link-alt"></i> Open resource
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+{% else %}
+    <p class="text-muted">No materials yet.</p>
+{% endif %}
+
+<a href="{% url 'learning:week_detail' topic.week.id %}" class="btn btn-secondary mt-3">
+    <i class="fas fa-arrow-left"></i> Back to Week
+</a>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}{{ assignment.title }}{% endblock %}
+{% block content %}
+<h1><i class="fas fa-pen-fancy"></i> {{ assignment.title }}</h1>
+<div class="prose mb-3">{{ assignment.description|linebreaks }}</div>
+
+{% if from_review %}
+    <div class="alert alert-secondary">
+        <i class="fas fa-eye"></i>
+        You are viewing this assignment from the <strong>Reviews I've Given</strong> page.
+        Submitting or editing is disabled here — go to
+        <a href="{% url 'learning:week_detail' assignment.week.id %}">Week {{ assignment.week.number }}</a>
+        if you want to work on it yourself.
+    </div>
+{% endif %}
+
+<div class="card mb-3">
+    <div class="card-header"><i class="fas fa-tasks"></i> Task</div>
+    <div class="card-body">
+        <div class="prose">{{ assignment.prompt|linebreaks }}</div>
+        <p class="text-muted mb-0">
+            Submission type: <strong>{{ assignment.get_submission_type_display }}</strong>
+        </p>
+    </div>
+</div>
+
+{% if assignment.criteria.all %}
+<div class="card mb-3">
+    <div class="card-header"><i class="fas fa-clipboard-check"></i> Rubric</div>
+    <div class="card-body">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Criterion</th><th>Description</th><th>Max</th></tr></thead>
+            <tbody>
+                {% for c in assignment.criteria.all %}
+                <tr>
+                    <td><strong>{{ c.name }}</strong></td>
+                    <td>{{ c.description }}</td>
+                    <td>{{ c.max_score }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if submission %}
+    <div class="card mb-3">
+        <div class="card-header"><i class="fas fa-file-upload"></i> Your Submission</div>
+        <div class="card-body">
+            <p><strong>Submitted:</strong> {{ submission.submitted_at|date:"M d, Y H:i" }}</p>
+            {% if submission.link %}
+                <p><strong>Link:</strong>
+                    <a href="{{ submission.link }}" target="_blank" rel="noopener">{{ submission.link }}</a>
+                </p>
+            {% endif %}
+            {% if submission.text_content %}
+                <div class="prose">{{ submission.text_content|linebreaks }}</div>
+            {% endif %}
+
+            {% if review_request %}
+                <hr>
+                <p><strong>Reviewer:</strong>
+                    {{ review_request.reviewer.get_full_name|default:review_request.reviewer.username }}
+                </p>
+                <p><strong>Request status:</strong>
+                    {% if review_request.status == 'pending' %}
+                        <span class="badge badge-pending">Pending — waiting for them to accept</span>
+                    {% elif review_request.status == 'accepted' %}
+                        <span class="badge bg-info text-dark">Accepted — they can now review</span>
+                    {% elif review_request.status == 'rejected' %}
+                        <span class="badge bg-danger">Rejected — please pick another reviewer</span>
+                    {% elif review_request.status == 'completed' %}
+                        <span class="badge badge-passed">Completed</span>
+                    {% endif %}
+                </p>
+            {% endif %}
+
+            {% if submission.review %}
+                <hr>
+                <p><strong>Score:</strong> <span class="badge badge-passed">{{ submission.percentage }}%</span></p>
+                <div class="prose">{{ submission.review.comment|linebreaks }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if from_review %}
+        <button type="button" class="btn btn-primary disabled" style="filter: blur(0.6px); opacity: 0.55; pointer-events: none; cursor: not-allowed;">
+            {% if review_request and review_request.status == 'rejected' %}Re-submit with new reviewer{% else %}Update submission{% endif %}
+        </button>
+        {% if not submission.review %}
+            <button type="button" class="btn btn-danger disabled" style="filter: blur(0.6px); opacity: 0.55; pointer-events: none; cursor: not-allowed;">
+                Delete submission
+            </button>
+        {% endif %}
+        <a href="{% url 'learning:reviews_given' %}" class="btn btn-secondary">Back to Reviews</a>
+    {% else %}
+        <a href="{% url 'learning:submit_assignment' assignment.id %}" class="btn btn-primary">
+            {% if review_request and review_request.status == 'rejected' %}Re-submit with new reviewer{% else %}Update submission{% endif %}
+        </a>
+        {% if not submission.review %}
+            <a href="{% url 'learning:delete_submission' submission.id %}" class="btn btn-danger">Delete submission</a>
+        {% endif %}
+    {% endif %}
+
+{% else %}
+    {% if from_review %}
+        <button type="button" class="btn btn-success disabled" style="filter: blur(0.6px); opacity: 0.55; pointer-events: none; cursor: not-allowed;">
+            Submit now
+        </button>
+    {% else %}
+        <a href="{% url 'learning:submit_assignment' assignment.id %}" class="btn btn-success">Submit now</a>
+    {% endif %}
+{% endif %}
+
+<a href="{% if from_review %}{% url 'learning:reviews_given' %}{% else %}{% url 'learning:week_detail' assignment.week.id %}{% endif %}"
+   class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Back
+</a>
+{% endblock %}

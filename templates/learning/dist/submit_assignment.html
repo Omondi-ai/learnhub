@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Submit: {{ assignment.title }}{% endblock %}
+{% block content %}
+<h1>Submit: {{ assignment.title }}</h1>
+<p>{{ assignment.prompt }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form|crispy }}
+
+    <div class="mb-3">
+        <label for="reviewer" class="form-label"><strong>Choose a reviewer</strong></label>
+        <select name="reviewer" id="reviewer" class="form-select" required>
+            <option value="">— Select a peer —</option>
+            {% for r in eligible_reviewers %}
+                <option value="{{ r.id }}" {% if existing_reviewer_id == r.id %}selected{% endif %}>
+                    {{ r.get_full_name|default:r.username }}
+                </option>
+            {% endfor %}
+        </select>
+        <div class="form-text">Your chosen peer will receive a request and can accept or reject it.</div>
+    </div>
+
+    <button class="btn btn-success">Save Submission</button>
+    <a href="{% url 'learning:assignment_detail' assignment.id %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Transcript{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Your Transcript</h1>
+    {% if not no_cohort %}
+        <a href="{% url 'learning:transcript' %}?download=1" class="btn btn-success">
+            <i class="fas fa-download"></i> Download CSV
+        </a>
+    {% endif %}
+</div>
+
+{% if no_cohort %}
+    <div class="alert alert-warning">You are not yet assigned to a cohort.</div>
+{% else %}
+
+    <!-- SUMMARY CARD -->
+    <div class="card mb-4">
+        <div class="card-header"><strong>Summary</strong></div>
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="summary-stat">
+                        <div class="display-6">{{ summary.overall_average }}%</div>
+                        <small class="text-muted">Overall Average</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="summary-stat">
+                        <div class="display-6">{{ summary.overall_letter }}</div>
+                        <small class="text-muted">Overall Grade</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="summary-stat">
+                        <div class="display-6">{{ summary.passed_weeks }}/{{ summary.total_weeks }}</div>
+                        <small class="text-muted">Weeks Passed</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="summary-stat">
+                        <div class="display-6">{{ summary.graded_assignments }}/{{ summary.total_assignments }}</div>
+                        <small class="text-muted">Assignments Graded</small>
+                    </div>
+                </div>
+            </div>
+            <p class="text-muted mb-0 mt-2">
+                Pass mark for a week: <strong>{{ pass_mark }}%</strong>. A week is only passed once every assignment in it has been reviewed.
+            </p>
+        </div>
+    </div>
+
+    <!-- WEEK-BY-WEEK TABLE -->
+    <h4 class="mt-4">Week-by-Week Breakdown</h4>
+
+    {% for row in rows %}
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Week {{ row.week.number }}: {{ row.week.title }}</span>
+                <span>
+                    {% if row.progress %}
+                        {% if row.progress.status == 'passed' %}
+                            <span class="badge badge-passed">Passed — {{ row.progress.average_score }}%</span>
+                        {% elif row.progress.status == 'failed' %}
+                            <span class="badge bg-danger">Failed — {{ row.progress.average_score }}%</span>
+                        {% else %}
+                            <span class="badge badge-pending">In progress</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge badge-locked">Not started</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Assignment</th>
+                            <th>Submitted</th>
+                            <th>Reviewer</th>
+                            <th>Score</th>
+                            <th>Grade</th>
+                            <th>Feedback</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for a in row.assignments %}
+                        <tr>
+                            <td>{{ a.assignment.title }}</td>
+                            <td>
+                                {% if a.submission %}
+                                    {{ a.submission.submitted_at|date:"M d, Y" }}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if a.submission and a.submission.reviewer %}
+                                    {{ a.submission.reviewer.get_full_name|default:a.submission.reviewer.username }}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if a.score is not None %}
+                                    {{ a.score }}%
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if a.score is not None %}
+                                    <strong>
+                                    {% if a.score >= 75 %}A
+                                    {% elif a.score >= 60 %}B
+                                    {% elif a.score >= 50 %}C
+                                    {% elif a.score >= 40 %}D
+                                    {% else %}E{% endif %}
+                                    </strong>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if a.submission and a.submission.review %}
+                                    {{ a.submission.review.comment|truncatewords:15 }}
+                                {% else %}
+                                    <span class="text-muted">Not yet reviewed</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endfor %}
+
+{% endif %}
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load learning_extras %}
+{% block title %}Reviews I've Given{% endblock %}
+{% block content %}
+<h1>Reviews I've Given</h1>
+<p class="text-muted">
+    Every review you've completed for another learner. Re-read these to keep learning from others' approaches.
+</p>
+
+{% if reviews %}
+    {% for r in reviews %}
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <strong>{{ r.submission.assignment.title }}</strong>
+                <small class="text-muted d-block">
+                    Week {{ r.submission.assignment.week.number }} —
+                    submitted by {{ r.submission.learner.get_full_name|default:r.submission.learner.username }}
+                </small>
+            </div>
+            <div class="text-end">
+                <span class="badge badge-passed">Score: {{ r.total_score|floatformat:1 }}</span>
+                <small class="text-muted d-block">{{ r.reviewed_at|date:"M d, Y" }}</small>
+            </div>
+        </div>
+        <div class="card-body">
+            <h6 class="text-uppercase text-muted">Their Submission</h6>
+            {% if r.submission.link %}
+                <p><strong>Link:</strong>
+                    <a href="{{ r.submission.link }}" target="_blank" rel="noopener">
+                        {{ r.submission.link }}
+                    </a>
+                </p>
+            {% endif %}
+            {% if r.submission.text_content %}
+                <div class="border p-3 bg-light mb-3">
+                    {{ r.submission.text_content|linebreaks }}
+                </div>
+            {% endif %}
+            {% if not r.submission.link and not r.submission.text_content %}
+                <p class="text-muted">No submission content available.</p>
+            {% endif %}
+
+            <h6 class="text-uppercase text-muted mt-3">Your Feedback</h6>
+            <div class="border-start border-4 ps-3 mb-3" style="border-color: #409f7a !important;">
+                {{ r.comment|linebreaks }}
+            </div>
+
+            {% if r.criterion_scores %}
+                <h6 class="text-uppercase text-muted">Your Criterion Scores</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr><th>Criterion</th><th>Score</th><th>Max</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for c in r.submission.assignment.criteria.all %}
+                            <tr>
+                                <td>{{ c.name }}</td>
+                                <td>
+                                    {% with score=r.criterion_scores|get_item:c.id %}
+                                        {{ score|default:"—" }}
+                                    {% endwith %}
+                                </td>
+                                <td>{{ c.max_score }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+
+            <a href="{% url 'learning:assignment_detail' r.submission.assignment.id %}?from=review"
+               class="btn btn-sm btn-outline-primary">
+                View Assignment
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="alert alert-info">
+        You haven't reviewed anyone's work yet. When someone asks you to review theirs,
+        the request will appear in your <a href="{% url 'learning:review_inbox' %}">Review Inbox</a>.
+    </div>
+{% endif %}
+{% endblock %}

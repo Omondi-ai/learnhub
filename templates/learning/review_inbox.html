@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}Review Inbox{% endblock %}
+{% block content %}
+
+<div class="dashboard-hero">
+    <h1><i class="fas fa-inbox"></i> Review Inbox</h1>
+    <p>Requests from your classmates waiting for you. Accept one, review it, help them move forward.</p>
+</div>
+
+<!-- ============ PENDING REQUESTS ============ -->
+<div class="section-title">
+    <i class="fas fa-bell"></i>
+    <span>Waiting for your response</span>
+    {% if pending %}<span class="badge badge-pending">{{ pending|length }}</span>{% endif %}
+</div>
+
+{% if pending %}
+    <div class="row g-3">
+        {% for r in pending %}
+        <div class="col-md-6">
+            <div class="inbox-card inbox-pending">
+                <div class="inbox-ribbon ribbon-gold"></div>
+                <div class="inbox-body">
+                    <div class="inbox-meta">
+                        <span class="tag-curriculum">Week {{ r.submission.assignment.week.number }}</span>
+                        <span class="inbox-time">{{ r.created_at|timesince }} ago</span>
+                    </div>
+                    <h5 class="inbox-title">{{ r.submission.assignment.title }}</h5>
+                    <p class="inbox-from">
+                        <i class="fas fa-user-circle"></i>
+                        From <strong>{{ r.requester.get_full_name|default:r.requester.username }}</strong>
+                    </p>
+
+                    {% if r.submission.link or r.submission.text_content %}
+                        <p class="inbox-peek">
+                            {% if r.submission.link %}
+                                <i class="fas fa-link"></i> A link is attached
+                            {% elif r.submission.text_content %}
+                                <i class="fas fa-file-lines"></i>
+                                {{ r.submission.text_content|truncatechars:90 }}
+                            {% endif %}
+                        </p>
+                    {% endif %}
+
+                    <div class="inbox-actions">
+                        <a href="{% url 'learning:accept_request' r.id %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-check"></i> Accept
+                        </a>
+                        <a href="{% url 'learning:reject_request' r.id %}" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-times"></i> Decline
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-mug-hot"></i></div>
+        <h5>No requests waiting</h5>
+        <p>You're all caught up. When a classmate picks you to review their work, it will appear here.</p>
+    </div>
+{% endif %}
+
+<!-- ============ ACCEPTED ============ -->
+<div class="section-title">
+    <i class="fas fa-clipboard-check"></i>
+    <span>Ready for you to review</span>
+    {% if accepted %}<span class="badge bg-info">{{ accepted|length }}</span>{% endif %}
+</div>
+
+{% if accepted %}
+    <div class="row g-3">
+        {% for r in accepted %}
+        <div class="col-md-6">
+            <div class="inbox-card inbox-accepted">
+                <div class="inbox-ribbon ribbon-emerald"></div>
+                <div class="inbox-body">
+                    <div class="inbox-meta">
+                        <span class="tag-curriculum">Week {{ r.submission.assignment.week.number }}</span>
+                        <span class="inbox-time">Accepted {{ r.responded_at|timesince }} ago</span>
+                    </div>
+                    <h5 class="inbox-title">{{ r.submission.assignment.title }}</h5>
+                    <p class="inbox-from">
+                        <i class="fas fa-user-circle"></i>
+                        From <strong>{{ r.requester.get_full_name|default:r.requester.username }}</strong>
+                    </p>
+                    <div class="inbox-actions">
+                        <a href="{% url 'learning:review_submission' r.submission.id %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-pen"></i> Review now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state empty-state-sm">
+        <div class="empty-icon"><i class="fas fa-feather-pointed"></i></div>
+        <p>Nothing here yet — accept a request above to get started.</p>
+    </div>
+{% endif %}
+
+<!-- ============ COMPLETED ============ -->
+<div class="section-title">
+    <i class="fas fa-circle-check"></i>
+    <span>Recently completed</span>
+</div>
+
+{% if completed %}
+    <div class="completed-list">
+        {% for r in completed %}
+        <div class="completed-item">
+            <div class="completed-left">
+                <span class="completed-dot"></span>
+                <div>
+                    <strong>{{ r.submission.assignment.title }}</strong>
+                    <small class="d-block text-muted">
+                        {{ r.requester.get_full_name|default:r.requester.username }}
+                        · Week {{ r.submission.assignment.week.number }}
+                    </small>
+                </div>
+            </div>
+            <div class="completed-right">
+                <span class="badge badge-passed"><i class="fas fa-check"></i> Done</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state empty-state-sm">
+        <div class="empty-icon"><i class="fas fa-leaf"></i></div>
+        <p>No completed reviews yet. Once you finish reviewing a classmate's work, it will appear here.</p>
+    </div>
+{% endif %}
+
+{% endblock %}
