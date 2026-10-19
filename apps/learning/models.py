@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
+from django_ckeditor_5.fields import CKEditor5Field
 
 
 class User(AbstractUser):
@@ -28,7 +29,7 @@ class Week(models.Model):
     cohort = models.ForeignKey(Cohort, on_delete=models.CASCADE, related_name='weeks')
     number = models.PositiveIntegerField()
     title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
+    description = CKEditor5Field('Description', config_name='default', blank=True)
 
     class Meta:
         ordering = ['number']
@@ -38,40 +39,29 @@ class Week(models.Model):
         return f"Week {self.number}: {self.title}"
 
     def is_unlocked_for(self, learner):
-        """Week 1 is always unlocked. Any other week requires ALL previous weeks to be passed."""
         if self.number == 1:
             return True
-
-        # Count how many previous weeks exist
-        previous_weeks = Week.objects.filter(
-            cohort=self.cohort, number__lt=self.number
-        )
+        previous_weeks = Week.objects.filter(cohort=self.cohort, number__lt=self.number)
         total_previous = previous_weeks.count()
         if total_previous == 0:
             return False
-
-        # Count how many of those the learner has passed
         passed_count = WeeklyProgress.objects.filter(
             learner=learner, week__in=previous_weeks, status='passed'
         ).count()
-
         return passed_count == total_previous
 
     def is_next_to_attempt(self, learner):
-        """True if this week is the immediate next week the learner should work on."""
         if not self.is_unlocked_for(learner):
             return False
-        # Has the learner already passed this week?
-        already_passed = WeeklyProgress.objects.filter(
+        return not WeeklyProgress.objects.filter(
             learner=learner, week=self, status='passed'
         ).exists()
-        return not already_passed
 
 
 class Topic(models.Model):
     week = models.ForeignKey(Week, on_delete=models.CASCADE, related_name='topics')
     title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
+    description = CKEditor5Field('Description', config_name='default', blank=True)
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -84,7 +74,7 @@ class Topic(models.Model):
 class ReferenceMaterial(models.Model):
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='materials')
     title = models.CharField(max_length=200)
-    content = models.TextField(blank=True)
+    content = CKEditor5Field('Content', config_name='default', blank=True)
     url = models.URLField(blank=True)
     order = models.PositiveIntegerField(default=0)
 
@@ -100,7 +90,7 @@ class Tool(models.Model):
     name = models.CharField(max_length=200)
     developer = models.CharField(max_length=200, blank=True)
     category = models.CharField(max_length=100, blank=True)
-    description = models.TextField(blank=True)
+    description = CKEditor5Field('Description', config_name='default', blank=True)
     website = models.URLField(blank=True)
     order = models.PositiveIntegerField(default=0)
 
@@ -114,8 +104,8 @@ class Tool(models.Model):
 class ToolFeature(models.Model):
     tool = models.ForeignKey(Tool, on_delete=models.CASCADE, related_name='features')
     title = models.CharField(max_length=200)
-    purpose = models.TextField()
-    how_to_use = models.TextField()
+    purpose = CKEditor5Field('Purpose', config_name='default')
+    how_to_use = CKEditor5Field('How to use', config_name='default')
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -135,8 +125,8 @@ class Assignment(models.Model):
     tool = models.ForeignKey(Tool, on_delete=models.SET_NULL, null=True, blank=True, related_name='assignments')
     topic = models.ForeignKey(Topic, on_delete=models.SET_NULL, null=True, blank=True, related_name='assignments')
     title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    prompt = models.TextField()
+    description = CKEditor5Field('Description', config_name='default', blank=True)
+    prompt = CKEditor5Field('Prompt', config_name='default')
     submission_type = models.CharField(max_length=10, choices=SUBMISSION_TYPES, default='link')
     is_open_ended = models.BooleanField(default=True)
 
@@ -162,7 +152,6 @@ class RubricCriterion(models.Model):
 
 
 class PeerPairing(models.Model):
-    """Legacy — kept only so existing migrations don't break."""
     week = models.ForeignKey(Week, on_delete=models.CASCADE, related_name='pairings', null=True, blank=True)
     learner_a = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pairings_as_a', null=True, blank=True)
     learner_b = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pairings_as_b', null=True, blank=True)
@@ -208,10 +197,6 @@ class Submission(models.Model):
 
 
 class ReviewRequest(models.Model):
-    """
-    A learner asks another learner to review their submission.
-    The reviewer must accept or reject before being able to score it.
-    """
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('accepted', 'Accepted'),
@@ -227,7 +212,6 @@ class ReviewRequest(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        # Only one open request per submission
         constraints = [
             models.UniqueConstraint(fields=['submission'], name='one_request_per_submission')
         ]

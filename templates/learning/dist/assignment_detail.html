@@ -1,8 +1,12 @@
 {% extends 'base.html' %}
 {% block title %}{{ assignment.title }}{% endblock %}
 {% block content %}
+
 <h1><i class="fas fa-pen-fancy"></i> {{ assignment.title }}</h1>
-<div class="prose mb-3">{{ assignment.description|linebreaks }}</div>
+
+{% if assignment.description %}
+    <div class="prose mb-3">{{ assignment.description|safe }}</div>
+{% endif %}
 
 {% if from_review %}
     <div class="alert alert-secondary">
@@ -17,8 +21,8 @@
 <div class="card mb-3">
     <div class="card-header"><i class="fas fa-tasks"></i> Task</div>
     <div class="card-body">
-        <div class="prose">{{ assignment.prompt|linebreaks }}</div>
-        <p class="text-muted mb-0">
+        <div class="prose">{{ assignment.prompt|safe }}</div>
+        <p class="text-muted mb-0 mt-3">
             Submission type: <strong>{{ assignment.get_submission_type_display }}</strong>
         </p>
     </div>
@@ -28,18 +32,20 @@
 <div class="card mb-3">
     <div class="card-header"><i class="fas fa-clipboard-check"></i> Rubric</div>
     <div class="card-body">
-        <table class="table table-sm mb-0">
-            <thead><tr><th>Criterion</th><th>Description</th><th>Max</th></tr></thead>
-            <tbody>
-                {% for c in assignment.criteria.all %}
-                <tr>
-                    <td><strong>{{ c.name }}</strong></td>
-                    <td>{{ c.description }}</td>
-                    <td>{{ c.max_score }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-wrap">
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Criterion</th><th>Description</th><th>Max</th></tr></thead>
+                <tbody>
+                    {% for c in assignment.criteria.all %}
+                    <tr>
+                        <td><strong>{{ c.name }}</strong></td>
+                        <td>{{ c.description }}</td>
+                        <td>{{ c.max_score }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endif %}
@@ -95,12 +101,14 @@
         {% endif %}
         <a href="{% url 'learning:reviews_given' %}" class="btn btn-secondary">Back to Reviews</a>
     {% else %}
-        <a href="{% url 'learning:submit_assignment' assignment.id %}" class="btn btn-primary">
-            {% if review_request and review_request.status == 'rejected' %}Re-submit with new reviewer{% else %}Update submission{% endif %}
-        </a>
-        {% if not submission.review %}
-            <a href="{% url 'learning:delete_submission' submission.id %}" class="btn btn-danger">Delete submission</a>
-        {% endif %}
+        <div class="btn-row btn-stack-sm mt-2">
+            <a href="{% url 'learning:submit_assignment' assignment.id %}" class="btn btn-primary">
+                {% if review_request and review_request.status == 'rejected' %}Re-submit with new reviewer{% else %}Update submission{% endif %}
+            </a>
+            {% if not submission.review %}
+                <a href="{% url 'learning:delete_submission' submission.id %}" class="btn btn-danger">Delete submission</a>
+            {% endif %}
+        </div>
     {% endif %}
 
 {% else %}

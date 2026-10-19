@@ -2,25 +2,24 @@
 {% load learning_extras %}
 {% block title %}Week {{ week.number }}{% endblock %}
 {% block content %}
-<h1>Week {{ week.number }}: {{ week.title }}</h1>
-<p class="text-muted">{{ week.description }}</p>
 
-{% if partner %}
-    <div class="alert alert-info">
-        <strong>Your review partner this week:</strong> {{ partner.get_full_name|default:partner.username }}.
-        You review their work, and they review yours.
-    </div>
-{% else %}
-    <div class="alert alert-warning">No partner has been assigned yet. Please contact your administrator.</div>
+<div class="dashboard-hero">
+    <h1><i class="fas fa-calendar-week"></i> Week {{ week.number }}: {{ week.title }}</h1>
+</div>
+
+{% if week.description %}
+    <div class="prose mb-4">{{ week.description|safe }}</div>
 {% endif %}
 
-<h3 class="mt-4">Topics</h3>
+<h3 class="section-title"><i class="fas fa-lightbulb"></i> Topics</h3>
 {% if topics %}
     <div class="list-group">
     {% for topic in topics %}
         <a href="{% url 'learning:topic_detail' topic.id %}" class="list-group-item list-group-item-action">
             <strong>{{ topic.title }}</strong>
-            <small class="text-muted d-block">{{ topic.description|truncatewords:15 }}</small>
+            {% if topic.description %}
+                <div class="text-muted small mt-1">{{ topic.description|striptags|truncatewords:20 }}</div>
+            {% endif %}
         </a>
     {% endfor %}
     </div>
@@ -28,13 +27,15 @@
     <p class="text-muted">No topics for this week.</p>
 {% endif %}
 
-<h3 class="mt-4">Tools to Learn</h3>
+<h3 class="section-title"><i class="fas fa-toolbox"></i> Tools to Learn</h3>
 {% if tools %}
     <div class="list-group">
     {% for tool in tools %}
         <a href="{% url 'learning:tool_detail' tool.id %}" class="list-group-item list-group-item-action">
             <strong>{{ tool.name }}</strong>
-            <small class="text-muted d-block">{{ tool.description|truncatewords:15 }}</small>
+            {% if tool.description %}
+                <div class="text-muted small mt-1">{{ tool.description|striptags|truncatewords:20 }}</div>
+            {% endif %}
         </a>
     {% endfor %}
     </div>
@@ -42,42 +43,46 @@
     <p class="text-muted">No tools for this week.</p>
 {% endif %}
 
-<h3 class="mt-4">Assignments</h3>
+<h3 class="section-title"><i class="fas fa-tasks"></i> Assignments</h3>
 {% if assignments %}
-    <table class="table table-bordered">
-        <thead>
-            <tr><th>Assignment</th><th>Type</th><th>Status</th><th>Action</th></tr>
-        </thead>
-        <tbody>
-        {% for a in assignments %}
-            {% with sub=submissions|get_item:a.id %}
-            <tr>
-                <td>{{ a.title }}</td>
-                <td>{{ a.get_submission_type_display }}</td>
-                <td>
-                    {% if sub %}
-                        {% if sub.review %}
-                            <span class="badge badge-passed">Reviewed — {{ sub.percentage }}%</span>
+    <div class="table-wrap">
+        <table class="table table-sm">
+            <thead>
+                <tr><th>Assignment</th><th>Type</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+            {% for a in assignments %}
+                {% with sub=submissions|get_item:a.id %}
+                <tr>
+                    <td>{{ a.title }}</td>
+                    <td>{{ a.get_submission_type_display }}</td>
+                    <td>
+                        {% if sub %}
+                            {% if sub.review %}
+                                <span class="badge badge-passed">Reviewed — {{ sub.percentage }}%</span>
+                            {% else %}
+                                <span class="badge badge-pending">Awaiting review</span>
+                            {% endif %}
                         {% else %}
-                            <span class="badge badge-pending">Awaiting review</span>
+                            <span class="badge badge-locked">Not submitted</span>
                         {% endif %}
-                    {% else %}
-                        <span class="badge badge-locked">Not submitted</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{% url 'learning:assignment_detail' a.id %}" class="btn btn-sm btn-primary">
-                        {% if sub %}View{% else %}Open{% endif %}
-                    </a>
-                </td>
-            </tr>
-            {% endwith %}
-        {% endfor %}
-        </tbody>
-    </table>
+                    </td>
+                    <td>
+                        <a href="{% url 'learning:assignment_detail' a.id %}" class="btn btn-sm btn-primary">
+                            {% if sub %}View{% else %}Open{% endif %}
+                        </a>
+                    </td>
+                </tr>
+                {% endwith %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% else %}
     <p class="text-muted">No assignments.</p>
 {% endif %}
 
-<a href="{% url 'learning:dashboard' %}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+<a href="{% url 'learning:dashboard' %}" class="btn btn-secondary mt-3">
+    <i class="fas fa-arrow-left"></i> Back to Dashboard
+</a>
 {% endblock %}

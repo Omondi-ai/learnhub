@@ -1,9 +1,13 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent.parent / '.env')
+except ImportError:
+    pass
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key-change-me')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
@@ -20,6 +24,7 @@ INSTALLED_APPS = [
     # Third party
     'crispy_forms',
     'crispy_bootstrap5',
+    'django_ckeditor_5',
 
     # Local
     'apps.learning',
@@ -94,14 +99,9 @@ LOGIN_REDIRECT_URL = 'learning:dashboard'
 LOGOUT_REDIRECT_URL = 'learning:login'
 
 # -------------------------------------------------------------------
-# Email
+# Email (default = console; override in .env for production)
 # -------------------------------------------------------------------
-# Development default: prints password reset emails to the console.
-# -------------------------------------------------------------------
-EMAIL_BACKEND = os.getenv(
-    'EMAIL_BACKEND',
-    'django.core.mail.backends.console.EmailBackend',
-)
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = os.getenv('EMAIL_HOST', '')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
@@ -109,19 +109,67 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'LearnHub <noreply@learnhub.local>')
 
-# For production on PythonAnywhere with Gmail, add these to .env:
-#
-#   EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-#   EMAIL_HOST=smtp.gmail.com
-#   EMAIL_PORT=587
-#   EMAIL_USE_TLS=True
-#   EMAIL_HOST_USER=youremail@gmail.com
-#   EMAIL_HOST_PASSWORD=your-16-char-app-password
-#   DEFAULT_FROM_EMAIL=LearnHub <youremail@gmail.com>
-#
-# (Generate the Gmail App Password at https://myaccount.google.com/apppasswords
-#  — you must have 2-Step Verification turned on.)
-
+# -------------------------------------------------------------------
 # Learning system settings
+# -------------------------------------------------------------------
 PASS_MARK = 60
 MIN_REVIEW_COMMENT_LENGTH = 20
+
+# -------------------------------------------------------------------
+# CKEditor 5 — rich text for admin content
+# -------------------------------------------------------------------
+CKEDITOR_5_CONFIGS = {
+    'default': {
+        'toolbar': {
+            'items': [
+                'heading', '|',
+                'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
+                'bold', 'italic', 'underline', 'strikethrough', '|',
+                'alignment', '|',
+                'bulletedList', 'numberedList', 'outdent', 'indent', '|',
+                'link', 'uploadImage', 'blockQuote', 'insertTable', 'mediaEmbed', '|',
+                'horizontalLine', 'specialCharacters', '|',
+                'undo', 'redo',
+            ],
+            'shouldNotGroupWhenFull': True,
+        },
+        'image': {
+            'toolbar': [
+                'imageStyle:inline',
+                'imageStyle:block',
+                'imageStyle:side',
+                '|',
+                'toggleImageCaption',
+                'imageTextAlternative',
+                '|',
+                'linkImage',
+            ],
+        },
+        'table': {
+            'contentToolbar': [
+                'tableColumn',
+                'tableRow',
+                'mergeTableCells',
+                'tableProperties',
+                'tableCellProperties',
+            ],
+        },
+        'heading': {
+            'options': [
+                {'model': 'paragraph', 'title': 'Paragraph', 'class': 'ck-heading_paragraph'},
+                {'model': 'heading1', 'view': 'h1', 'title': 'Heading 1', 'class': 'ck-heading_heading1'},
+                {'model': 'heading2', 'view': 'h2', 'title': 'Heading 2', 'class': 'ck-heading_heading2'},
+                {'model': 'heading3', 'view': 'h3', 'title': 'Heading 3', 'class': 'ck-heading_heading3'},
+                {'model': 'heading4', 'view': 'h4', 'title': 'Heading 4', 'class': 'ck-heading_heading4'},
+            ],
+        },
+        'height': 500,
+        'language': 'en',
+    },
+}
+
+# Who can upload images via CKEditor
+CKEDITOR_5_FILE_UPLOAD_PERMISSION = 'staff'
+CKEDITOR_5_UPLOAD_PATH = 'ckeditor_uploads/'
+CKEDITOR_5_ALLOW_ALL_FILE_TYPES = False
+CKEDITOR_5_MAX_FILE_SIZE = 5  # MB
